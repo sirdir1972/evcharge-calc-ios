@@ -1,4 +1,4 @@
-# EVCharge Calc
+# EVCharge Calc - iOS
 
 A mobile app for calculating EV charging energy requirements and timing.
 
