@@ -3,6 +3,8 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var settingsManager: SettingsManager
     @Environment(\.dismiss) private var dismiss
+    @StateObject private var goEChargerAPI = GoEChargerAPI()
+    @State private var isTestingConnection = false
     
     var body: some View {
         NavigationView {
@@ -67,6 +69,62 @@ struct SettingsView: View {
                     }
                 }
                 
+                Section(header: Text("go-eCharger Integration")) {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Enable go-eCharger")
+                                    .font(.body)
+                                Text("Push charge limits to charger")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Toggle("", isOn: $settingsManager.goEChargerEnabled)
+                                .onChange(of: settingsManager.goEChargerEnabled) { enabled in
+                                    if !enabled {
+                                        settingsManager.goEChargerConnectionStatus = "Not tested"
+                                    }
+                                }
+                        }
+                        
+                        if settingsManager.goEChargerEnabled {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Charger IP Address")
+                                    .font(.body)
+                                
+                                HStack {
+                                    TextField("192.168.1.100", text: $settingsManager.goEChargerIpAddress)
+                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .keyboardType(.numbersAndPunctuation)
+                                        .onChange(of: settingsManager.goEChargerIpAddress) { newValue in
+                                            // Only reset status if IP actually changed
+                                            if newValue != settingsManager.goEChargerIpAddress {
+                                                settingsManager.goEChargerConnectionStatus = "Not tested"
+                                            }
+                                        }
+                                    
+                                    Button("Test") {
+                                        testConnection()
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .disabled(settingsManager.goEChargerIpAddress.isEmpty || isTestingConnection)
+                                }
+                                
+                                HStack {
+                                    Text("Connection Status:")
+                                        .font(.body)
+                                    Spacer()
+                                    Text(isTestingConnection ? "Testing..." : settingsManager.goEChargerConnectionStatus)
+                                        .font(.body)
+                                        .fontWeight(.medium)
+                                        .foregroundColor(connectionStatusColor)
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 Section(footer: Text("Adjust these values based on your EV's specifications. Battery capacity is the total kWh rating, SOH represents battery degradation over time, and charge losses account for charging inefficiencies.")) {
                     EmptyView()
                 }
@@ -78,6 +136,37 @@ struct SettingsView: View {
                     Button("Done") {
                         dismiss()
                     }
+                }
+            }
+        }
+    }
+    
+    private var connectionStatusColor: Color {
+        if isTestingConnection {
+            return .blue
+        } else if settingsManager.goEChargerConnectionStatus.hasPrefix("✓") {
+            return .green
+        } else if settingsManager.goEChargerConnectionStatus.hasPrefix("✗") {
+            return .red
+        } else {
+            return .secondary
+        }
+    }
+    
+    private func testConnection() {
+        isTestingConnection = true
+        settingsManager.goEChargerConnectionStatus = "Testing..."
+        
+        Task {
+            let result = await goEChargerAPI.testConnection(ipAddress: settingsManager.goEChargerIpAddress)
+            
+            await MainActor.run {
+                isTestingConnection = false
+                
+                if result.success {
+                    settingsManager.goEChargerConnectionStatus = "✓ \(result.data ?? "Connected")"
+                } else {
+                    settingsManager.goEChargerConnectionStatus = "✗ \(result.error ?? "Failed")"
                 }
             }
         }
