@@ -13,6 +13,7 @@
 		A1A1A1A81B1B1B1B1B1B1B1B /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1A1A1A71B1B1B1B1B1B1B1B /* Preview Assets.xcassets */; };
 		A1A1A1B01B1B1B1B1B1B1B1B /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1AF1B1B1B1B1B1B1B1B /* SettingsManager.swift */; };
 		A1A1A1B21B1B1B1B1B1B1B1B /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1B11B1B1B1B1B1B1B1B /* SettingsView.swift */; };
+		A1A1A1B31B1B1B1B1B1B1B1B /* GoEChargerAPI.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1A1A1B21B1B1B1B1B1B1B1C /* GoEChargerAPI.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +24,7 @@
 		A1A1A1A71B1B1B1B1B1B1B1B /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		A1A1A1AF1B1B1B1B1B1B1B1B /* SettingsManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManager.swift; sourceTree = "<group>"; };
 		A1A1A1B11B1B1B1B1B1B1B1B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A1A1A1B21B1B1B1B1B1B1B1C /* GoEChargerAPI.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoEChargerAPI.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +61,7 @@
 				A1A1A1A21B1B1B1B1B1B1B1B /* ContentView.swift */,
 				A1A1A1AF1B1B1B1B1B1B1B1B /* SettingsManager.swift */,
 				A1A1A1B11B1B1B1B1B1B1B1B /* SettingsView.swift */,
+				A1A1A1B21B1B1B1B1B1B1B1C /* GoEChargerAPI.swift */,
 				A1A1A1A41B1B1B1B1B1B1B1B /* Assets.xcassets */,
 				A1A1A1A61B1B1B1B1B1B1B1B /* Preview Content */,
 			);
@@ -146,6 +149,7 @@
 				A1A1A1A31B1B1B1B1B1B1B1B /* ContentView.swift in Sources */,
 				A1A1A1B01B1B1B1B1B1B1B1B /* SettingsManager.swift in Sources */,
 				A1A1A1B21B1B1B1B1B1B1B1B /* SettingsView.swift in Sources */,
+				A1A1A1B31B1B1B1B1B1B1B1B /* GoEChargerAPI.swift in Sources */,
 				A1A1A1A11B1B1B1B1B1B1B1B /* EVChargeCalculatorApp.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -144,10 +144,26 @@ class GoEChargerAPI: ObservableObject {
             // Parse JSON response
             do {
                 if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
-                    if let energyResult = json["dwo"] as? String, energyResult == "true" {
+                    // Check if the setting was successful - go-eCharger may return "true" or "1" for success
+                    let energyResult = json["dwo"]
+                    
+                    var isSuccess = false
+                    
+                    // Check for string "true"
+                    if let stringResult = energyResult as? String {
+                        isSuccess = stringResult == "true"
+                    }
+                    // Check for number 1 (success) or the actual energy value
+                    else if let numberResult = energyResult as? NSNumber {
+                        // Consider it success if we get 1 (true) or if the value matches our set value (within tolerance)
+                        let numValue = numberResult.doubleValue
+                        isSuccess = (numValue == 1.0) || (abs(numValue - energyWh) < 100) // 100 Wh tolerance
+                    }
+                    
+                    if isSuccess {
                         return GoEChargerResult(success: true, data: "Energy limit set to \(energyWhInt) Wh", error: nil)
                     } else {
-                        return GoEChargerResult(success: false, data: nil, error: "Failed to set energy limit: \(json["dwo"] ?? "unknown")")
+                        return GoEChargerResult(success: false, data: nil, error: "Failed to set energy limit: \(energyResult ?? "unknown")")
                     }
                 } else {
                     return GoEChargerResult(success: false, data: nil, error: "Invalid JSON response")

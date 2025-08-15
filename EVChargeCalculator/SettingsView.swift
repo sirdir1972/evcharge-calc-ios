@@ -14,12 +14,16 @@ struct SettingsView: View {
                         HStack {
                             Text("Battery Capacity")
                             Spacer()
-                            Text("\(settingsManager.batteryCapacity, specifier: "%.1f") kWh")
+                            TextField("", value: $settingsManager.batteryCapacity, format: .number.precision(.fractionLength(1)))
+                                .textFieldStyle(.roundedBorder)
+                                .keyboardType(.decimalPad)
+                                .frame(width: 80)
+                                .multilineTextAlignment(.trailing)
+                                .font(.body.weight(.medium))
+                            Text("kWh")
                                 .foregroundColor(.secondary)
                         }
-                        Slider(value: $settingsManager.batteryCapacity, in: 10...200, step: 0.5) {
-                            Text("Battery Capacity")
-                        }
+                        Slider(value: $settingsManager.batteryCapacity, in: 10...200, step: 0.5)
                         .accentColor(.blue)
                     }
                     .padding(.vertical, 4)
@@ -28,12 +32,16 @@ struct SettingsView: View {
                         HStack {
                             Text("State of Health (SOH)")
                             Spacer()
-                            Text("\(settingsManager.stateOfHealth, specifier: "%.1f")%")
+                            TextField("", value: $settingsManager.stateOfHealth, format: .number.precision(.fractionLength(1)))
+                                .textFieldStyle(.roundedBorder)
+                                .keyboardType(.decimalPad)
+                                .frame(width: 80)
+                                .multilineTextAlignment(.trailing)
+                                .font(.body.weight(.medium))
+                            Text("%")
                                 .foregroundColor(.secondary)
                         }
-                        Slider(value: $settingsManager.stateOfHealth, in: 50...100, step: 0.5) {
-                            Text("State of Health")
-                        }
+                        Slider(value: $settingsManager.stateOfHealth, in: 50...100, step: 0.5)
                         .accentColor(.green)
                     }
                     .padding(.vertical, 4)
@@ -42,12 +50,16 @@ struct SettingsView: View {
                         HStack {
                             Text("Charge Losses")
                             Spacer()
-                            Text("\(settingsManager.chargeLosses, specifier: "%.1f")%")
+                            TextField("", value: $settingsManager.chargeLosses, format: .number.precision(.fractionLength(1)))
+                                .textFieldStyle(.roundedBorder)
+                                .keyboardType(.decimalPad)
+                                .frame(width: 80)
+                                .multilineTextAlignment(.trailing)
+                                .font(.body.weight(.medium))
+                            Text("%")
                                 .foregroundColor(.secondary)
                         }
-                        Slider(value: $settingsManager.chargeLosses, in: 5...25, step: 0.5) {
-                            Text("Charge Losses")
-                        }
+                        Slider(value: $settingsManager.chargeLosses, in: 5...25, step: 0.5)
                         .accentColor(.orange)
                     }
                     .padding(.vertical, 4)

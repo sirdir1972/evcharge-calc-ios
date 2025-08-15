@@ -48,30 +48,26 @@ struct ContentView: View {
                                         .font(.headline)
                                         .fontWeight(.medium)
                                     Spacer()
-                                    Text("\(settingsManager.currentSOC, specifier: "%.0f")%")
-                                        .font(.title2)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.primary)
+                                    TextField("", text: $currentSOCText)
+                                        .textFieldStyle(.roundedBorder)
+                                        .keyboardType(.numberPad)
+                                        .frame(width: 80)
+                                        .multilineTextAlignment(.trailing)
+                                        .font(.title2.weight(.semibold))
+                                        .foregroundColor(settingsManager.currentSOC < 20 ? .red : (settingsManager.currentSOC < 50 ? .orange : .green))
+                                        .onChange(of: currentSOCText) { newValue in
+                                            if let value = Double(newValue), value >= 0, value <= 100 {
+                                                settingsManager.currentSOC = value
+                                            }
+                                        }
                                 }
                                 
                                 Slider(value: $settingsManager.currentSOC, in: 0...100, step: 1) { editing in
-                                    isEditingCurrentSOC = editing
                                     if !editing {
                                         currentSOCText = String(format: "%.0f", settingsManager.currentSOC)
                                     }
                                 }
                                 .accentColor(.orange)
-                                
-                                TextField("Current SOC %", text: $currentSOCText)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .keyboardType(.decimalPad)
-                                    .onSubmit {
-                                        if let value = Double(currentSOCText), value >= 0, value <= 100 {
-                                            settingsManager.currentSOC = value
-                                        } else {
-                                            currentSOCText = String(format: "%.0f", settingsManager.currentSOC)
-                                        }
-                                    }
                             }
                             
                             Divider()
@@ -87,30 +83,26 @@ struct ContentView: View {
                                         .font(.headline)
                                         .fontWeight(.medium)
                                     Spacer()
-                                    Text("\(settingsManager.targetSOC, specifier: "%.0f")%")
-                                        .font(.title2)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.primary)
+                                    TextField("", text: $targetSOCText)
+                                        .textFieldStyle(.roundedBorder)
+                                        .keyboardType(.numberPad)
+                                        .frame(width: 80)
+                                        .multilineTextAlignment(.trailing)
+                                        .font(.title2.weight(.semibold))
+                                        .foregroundColor(settingsManager.targetSOC < 20 ? .red : (settingsManager.targetSOC < 50 ? .orange : .green))
+                                        .onChange(of: targetSOCText) { newValue in
+                                            if let value = Double(newValue), value >= 0, value <= 100 {
+                                                settingsManager.targetSOC = value
+                                            }
+                                        }
                                 }
                                 
                                 Slider(value: $settingsManager.targetSOC, in: 0...100, step: 1) { editing in
-                                    isEditingTargetSOC = editing
                                     if !editing {
                                         targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
                                     }
                                 }
                                 .accentColor(.green)
-                                
-                                TextField("Target SOC %", text: $targetSOCText)
-                                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                                    .keyboardType(.decimalPad)
-                                    .onSubmit {
-                                        if let value = Double(targetSOCText), value >= 0, value <= 100 {
-                                            settingsManager.targetSOC = value
-                                        } else {
-                                            targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
-                                        }
-                                    }
                             }
                         }
                     }
@@ -255,21 +247,10 @@ struct ContentView: View {
                             Image(systemName: "gearshape.fill")
                                 .foregroundColor(.purple)
                                 .font(.title2)
-                            Text("Settings")
+                            Text("Battery Configuration")
                                 .font(.headline)
                                 .fontWeight(.medium)
                             Spacer()
-                            Button {
-                                showingSettings = true
-                            } label: {
-                                Text("Open Settings")
-                                    .font(.subheadline)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color.purple)
-                                    .cornerRadius(8)
-                            }
                         }
                         
                         VStack(spacing: 12) {
@@ -310,33 +291,33 @@ struct ContentView: View {
                     
                     // Quick presets
                     VStack(spacing: 12) {
-                        Text("Quick Presets")
+                        Text("Quick Charge Presets")
                             .font(.headline)
                             .fontWeight(.medium)
                         
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
                             GridItem(.flexible()),
+                            GridItem(.flexible()),
                             GridItem(.flexible())
                         ], spacing: 12) {
-                            PresetButton(title: "Daily\n(20-80%)", currentSOC: 20, targetSOC: 80, onTap: { current, target in
-                                settingsManager.currentSOC = current
+                            PresetButton(title: "70%\nDaily", targetSOC: 70, onTap: { target in
                                 settingsManager.targetSOC = target
-                                currentSOCText = String(format: "%.0f", current)
                                 targetSOCText = String(format: "%.0f", target)
                             })
                             
-                            PresetButton(title: "Road Trip\n(20-100%)", currentSOC: 20, targetSOC: 100, onTap: { current, target in
-                                settingsManager.currentSOC = current
+                            PresetButton(title: "80%\nDaily", targetSOC: 80, onTap: { target in
                                 settingsManager.targetSOC = target
-                                currentSOCText = String(format: "%.0f", current)
                                 targetSOCText = String(format: "%.0f", target)
                             })
                             
-                            PresetButton(title: "Top Up\n(60-90%)", currentSOC: 60, targetSOC: 90, onTap: { current, target in
-                                settingsManager.currentSOC = current
+                            PresetButton(title: "90%\nTop Up", targetSOC: 90, onTap: { target in
                                 settingsManager.targetSOC = target
-                                currentSOCText = String(format: "%.0f", current)
+                                targetSOCText = String(format: "%.0f", target)
+                            })
+                            
+                            PresetButton(title: "100%\nFull Charge", targetSOC: 100, onTap: { target in
+                                settingsManager.targetSOC = target
                                 targetSOCText = String(format: "%.0f", target)
                             })
                         }
@@ -345,15 +326,15 @@ struct ContentView: View {
                 }
                 .padding()
             }
-            .navigationTitle("")
-            .navigationBarHidden(true)
+            .navigationTitle("EV Charge Calculator")
+            .navigationBarTitleDisplayMode(.inline)
             .background(Color(.systemGroupedBackground))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showingSettings = true
                     } label: {
-                        Image(systemName: "gearshape.fill")
+                        Image(systemName: "gearshape")
                             .font(.title2)
                     }
                 }
@@ -406,13 +387,12 @@ struct ContentView: View {
 
 struct PresetButton: View {
     let title: String
-    let currentSOC: Double
     let targetSOC: Double
-    let onTap: (Double, Double) -> Void
+    let onTap: (Double) -> Void
     
     var body: some View {
         Button {
-            onTap(currentSOC, targetSOC)
+            onTap(targetSOC)
         } label: {
             Text(title)
                 .font(.caption)
