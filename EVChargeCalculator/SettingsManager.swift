@@ -20,7 +20,7 @@ class SettingsManager: ObservableObject {
         }
     }
     
-    // SOC persistence
+    // SOC persistence with validation
     @Published var currentSOC: Double {
         didSet {
             UserDefaults.standard.set(currentSOC, forKey: "currentSOC")
@@ -75,5 +75,67 @@ class SettingsManager: ObservableObject {
         let baseEnergyNeeded = effectiveBatteryCapacity * (socDifference / 100.0)
         let energyWithLosses = baseEnergyNeeded * (1.0 + chargeLosses / 100.0)
         return max(0, energyWithLosses)
+    }
+    
+    // MARK: - Smart SOC Validation Methods
+    
+    /// Set current SOC with automatic constraint enforcement
+    func setCurrentSOC(_ value: Double) {
+        let clampedValue = min(max(value, 0), 100)
+        
+        // If current SOC would exceed target SOC, adjust target SOC upward
+        if clampedValue > targetSOC {
+            targetSOC = clampedValue
+        }
+        
+        currentSOC = clampedValue
+    }
+    
+    /// Set target SOC with automatic constraint enforcement
+    func setTargetSOC(_ value: Double) {
+        let clampedValue = min(max(value, 0), 100)
+        
+        // If target SOC would be less than current SOC, adjust current SOC downward
+        if clampedValue < currentSOC {
+            currentSOC = clampedValue
+        }
+        
+        targetSOC = clampedValue
+    }
+    
+    /// Check if current SOC configuration is valid
+    func isSOCConfigurationValid() -> Bool {
+        return currentSOC <= targetSOC
+    }
+    
+    /// Get validation message for current SOC state
+    func getSOCValidationMessage() -> String? {
+        if currentSOC > targetSOC {
+            return "Current charge cannot exceed target charge"
+        } else if targetSOC - currentSOC < 1.0 {
+            return "Target charge should be higher than current charge"
+        }
+        return nil
+    }
+    
+    /// Validate input string and return parsed value or nil
+    func validateSOCInput(_ input: String) -> (value: Double?, error: String?) {
+        guard !input.isEmpty else {
+            return (nil, "Required")
+        }
+        
+        guard let value = Double(input) else {
+            return (nil, "Invalid number")
+        }
+        
+        if value < 0 {
+            return (nil, "Cannot be negative")
+        }
+        
+        if value > 100 {
+            return (nil, "Cannot exceed 100%")
+        }
+        
+        return (value, nil)
     }
 }

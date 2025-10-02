@@ -11,6 +11,10 @@ struct ContentView: View {
     @State private var isPushingLimit = false
     @State private var pushResult: String? = nil
     
+    // Validation states
+    @State private var currentSOCError: String? = nil
+    @State private var targetSOCError: String? = nil
+    
     private var requiredEnergy: Double {
         settingsManager.calculateRequiredEnergy(from: settingsManager.currentSOC, to: settingsManager.targetSOC)
     }
@@ -48,26 +52,48 @@ struct ContentView: View {
                                         .font(.headline)
                                         .fontWeight(.medium)
                                     Spacer()
-                                    TextField("", text: $currentSOCText)
-                                        .textFieldStyle(.roundedBorder)
-                                        .keyboardType(.numberPad)
-                                        .frame(width: 80)
-                                        .multilineTextAlignment(.trailing)
-                                        .font(.title2.weight(.semibold))
-                                        .foregroundColor(settingsManager.currentSOC < 20 ? .red : (settingsManager.currentSOC < 50 ? .orange : .green))
-                                        .onChange(of: currentSOCText) { newValue in
-                                            if let value = Double(newValue), value >= 0, value <= 100 {
-                                                settingsManager.currentSOC = value
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        TextField("", text: $currentSOCText)
+                                            .textFieldStyle(.roundedBorder)
+                                            .keyboardType(.numberPad)
+                                            .frame(width: 80)
+                                            .multilineTextAlignment(.trailing)
+                                            .font(.title2.weight(.semibold))
+                                            .foregroundColor(currentSOCError != nil ? .red : (settingsManager.currentSOC < 20 ? .red : (settingsManager.currentSOC < 50 ? .orange : .green)))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(currentSOCError != nil ? Color.red : Color.clear, lineWidth: 1)
+                                            )
+                                            .onChange(of: currentSOCText) { newValue in
+                                                let validation = settingsManager.validateSOCInput(newValue)
+                                                currentSOCError = validation.error
+                                                
+                                                if let value = validation.value {
+                                                    settingsManager.setCurrentSOC(value)
+                                                }
                                             }
+                                        
+                                        if let error = currentSOCError {
+                                            Text(error)
+                                                .font(.caption2)
+                                                .foregroundColor(.red)
+                                                .frame(maxWidth: 80, alignment: .trailing)
                                         }
+                                    }
                                 }
                                 
-                                Slider(value: $settingsManager.currentSOC, in: 0...100, step: 1) { editing in
+                                Slider(value: Binding(
+                                    get: { settingsManager.currentSOC },
+                                    set: { newValue in
+                                        settingsManager.setCurrentSOC(newValue)
+                                        currentSOCError = nil // Clear errors when using slider
+                                    }
+                                ), in: 0...100, step: 1) { editing in
                                     if !editing {
                                         currentSOCText = String(format: "%.0f", settingsManager.currentSOC)
                                     }
                                 }
-                                .accentColor(.orange)
+                                .accentColor(currentSOCError != nil ? .red : .orange)
                             }
                             
                             Divider()
@@ -83,26 +109,48 @@ struct ContentView: View {
                                         .font(.headline)
                                         .fontWeight(.medium)
                                     Spacer()
-                                    TextField("", text: $targetSOCText)
-                                        .textFieldStyle(.roundedBorder)
-                                        .keyboardType(.numberPad)
-                                        .frame(width: 80)
-                                        .multilineTextAlignment(.trailing)
-                                        .font(.title2.weight(.semibold))
-                                        .foregroundColor(settingsManager.targetSOC < 20 ? .red : (settingsManager.targetSOC < 50 ? .orange : .green))
-                                        .onChange(of: targetSOCText) { newValue in
-                                            if let value = Double(newValue), value >= 0, value <= 100 {
-                                                settingsManager.targetSOC = value
+                                    VStack(alignment: .trailing, spacing: 4) {
+                                        TextField("", text: $targetSOCText)
+                                            .textFieldStyle(.roundedBorder)
+                                            .keyboardType(.numberPad)
+                                            .frame(width: 80)
+                                            .multilineTextAlignment(.trailing)
+                                            .font(.title2.weight(.semibold))
+                                            .foregroundColor(targetSOCError != nil ? .red : (settingsManager.targetSOC < 20 ? .red : (settingsManager.targetSOC < 50 ? .orange : .green)))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 8)
+                                                    .stroke(targetSOCError != nil ? Color.red : Color.clear, lineWidth: 1)
+                                            )
+                                            .onChange(of: targetSOCText) { newValue in
+                                                let validation = settingsManager.validateSOCInput(newValue)
+                                                targetSOCError = validation.error
+                                                
+                                                if let value = validation.value {
+                                                    settingsManager.setTargetSOC(value)
+                                                }
                                             }
+                                        
+                                        if let error = targetSOCError {
+                                            Text(error)
+                                                .font(.caption2)
+                                                .foregroundColor(.red)
+                                                .frame(maxWidth: 80, alignment: .trailing)
                                         }
+                                    }
                                 }
                                 
-                                Slider(value: $settingsManager.targetSOC, in: 0...100, step: 1) { editing in
+                                Slider(value: Binding(
+                                    get: { settingsManager.targetSOC },
+                                    set: { newValue in
+                                        settingsManager.setTargetSOC(newValue)
+                                        targetSOCError = nil // Clear errors when using slider
+                                    }
+                                ), in: 0...100, step: 1) { editing in
                                     if !editing {
                                         targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
                                     }
                                 }
-                                .accentColor(.green)
+                                .accentColor(targetSOCError != nil ? .red : .green)
                             }
                         }
                     }
@@ -112,6 +160,28 @@ struct ContentView: View {
                             .fill(Color(.systemBackground))
                             .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
                     )
+                    
+                    // Validation warning banner
+                    if let validationMessage = settingsManager.getSOCValidationMessage() {
+                        HStack(spacing: 8) {
+                            Text("⚠️")
+                                .font(.title3)
+                            Text("Auto-adjusted: \(validationMessage)")
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.orange)
+                            Spacer()
+                        }
+                        .padding(12)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.orange.opacity(0.1))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                        )
+                    }
                     
                     // Results Card
                     VStack(spacing: 16) {
@@ -155,9 +225,15 @@ struct ContentView: View {
                         }
                         
                         if socDifference < 0 {
-                            Text("Target charge is lower than current charge")
+                            Text("Target charge is lower than current charge. Please adjust values.")
                                 .font(.caption)
                                 .foregroundColor(.red)
+                                .padding(.top, 8)
+                        } else if socDifference == 0 {
+                            Text("Target charge equals current charge - no charging needed.")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                                .fontWeight(.medium)
                                 .padding(.top, 8)
                         }
                         
@@ -302,23 +378,27 @@ struct ContentView: View {
                             GridItem(.flexible())
                         ], spacing: 12) {
                             PresetButton(title: "70%\nDaily", targetSOC: 70, onTap: { target in
-                                settingsManager.targetSOC = target
-                                targetSOCText = String(format: "%.0f", target)
+                                settingsManager.setTargetSOC(target)
+                                targetSOCError = nil
+                                targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
                             })
                             
                             PresetButton(title: "80%\nDaily", targetSOC: 80, onTap: { target in
-                                settingsManager.targetSOC = target
-                                targetSOCText = String(format: "%.0f", target)
+                                settingsManager.setTargetSOC(target)
+                                targetSOCError = nil
+                                targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
                             })
                             
                             PresetButton(title: "90%\nTop Up", targetSOC: 90, onTap: { target in
-                                settingsManager.targetSOC = target
-                                targetSOCText = String(format: "%.0f", target)
+                                settingsManager.setTargetSOC(target)
+                                targetSOCError = nil
+                                targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
                             })
                             
                             PresetButton(title: "100%\nFull Charge", targetSOC: 100, onTap: { target in
-                                settingsManager.targetSOC = target
-                                targetSOCText = String(format: "%.0f", target)
+                                settingsManager.setTargetSOC(target)
+                                targetSOCError = nil
+                                targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
                             })
                         }
                     }
