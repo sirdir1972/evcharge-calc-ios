@@ -24,7 +24,7 @@ struct ContentView: View {
     }
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack(spacing: 24) {
                     // Header
@@ -255,7 +255,7 @@ struct ContentView: View {
                                         .fontWeight(.medium)
                                         .foregroundColor(.blue)
                                     Spacer()
-                                }
+                                    }
                                 
                                 let energyNeeded = settingsManager.calculateRequiredEnergy(
                                     from: settingsManager.currentSOC,
@@ -265,39 +265,39 @@ struct ContentView: View {
                                 let energyNeededWh = energyNeededRounded * 1000
                                 
                                 HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text("Energy limit: \(energyNeededRounded, specifier: "%.1f") kWh")
-                                            .font(.body)
-                                            .fontWeight(.medium)
-                                        Text("(\(Int(energyNeededWh)) Wh)")
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                    }
+                                    Text("Energy limit: \(energyNeededRounded, specifier: "%.1f") kWh")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
                                     
                                     Spacer()
                                     
-                                    Button {
-                                        setEnergyLimit(energyWh: energyNeededWh)
-                                    } label: {
-                                        HStack(spacing: 6) {
-                                            if isPushingLimit {
-                                                ProgressView()
-                                                    .scaleEffect(0.8)
-                                                Text("Pushing...")
-                                            } else {
-                                                Image(systemName: "paperplane.fill")
-                                                Text("Set Energy Limit")
-                                            }
-                                        }
-                                        .font(.subheadline)
-                                        .foregroundColor(.white)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 8)
-                                        .background(Color.blue)
-                                        .cornerRadius(8)
-                                    }
-                                    .disabled(isPushingLimit)
+                                    Text("(\(Int(energyNeededWh)) Wh)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
+                                
+                                Button {
+                                    setEnergyLimit(energyWh: energyNeededWh)
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        if isPushingLimit {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                            Text("Pushing...")
+                                        } else {
+                                            Image(systemName: "paperplane.fill")
+                                            Text("Set Energy Limit")
+                                        }
+                                    }
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 10)
+                                    .background(Color.blue)
+                                    .cornerRadius(10)
+                                }
+                                .disabled(isPushingLimit)
                                 
                                 // Push result status
                                 if let result = pushResult {
@@ -367,35 +367,24 @@ struct ContentView: View {
                     
                     // Quick presets
                     VStack(spacing: 12) {
-                        Text("Quick Charge Presets")
+                        Text("Quick Presets")
                             .font(.headline)
                             .fontWeight(.medium)
                         
-                        LazyVGrid(columns: [
-                            GridItem(.flexible()),
-                            GridItem(.flexible()),
-                            GridItem(.flexible()),
-                            GridItem(.flexible())
-                        ], spacing: 12) {
-                            PresetButton(title: "70%\nDaily", targetSOC: 70, onTap: { target in
+                        HStack(spacing: 12) {
+                            PresetButton(title: "Daily\n80%", targetSOC: 80, onTap: { target in
                                 settingsManager.setTargetSOC(target)
                                 targetSOCError = nil
                                 targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
                             })
                             
-                            PresetButton(title: "80%\nDaily", targetSOC: 80, onTap: { target in
+                            PresetButton(title: "Top Up\n90%", targetSOC: 90, onTap: { target in
                                 settingsManager.setTargetSOC(target)
                                 targetSOCError = nil
                                 targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
                             })
                             
-                            PresetButton(title: "90%\nTop Up", targetSOC: 90, onTap: { target in
-                                settingsManager.setTargetSOC(target)
-                                targetSOCError = nil
-                                targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
-                            })
-                            
-                            PresetButton(title: "100%\nFull Charge", targetSOC: 100, onTap: { target in
+                            PresetButton(title: "Road Trip\n100%", targetSOC: 100, onTap: { target in
                                 settingsManager.setTargetSOC(target)
                                 targetSOCError = nil
                                 targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
@@ -405,6 +394,8 @@ struct ContentView: View {
                     .padding(.horizontal)
                 }
                 .padding()
+                .frame(maxWidth: 600)
+                .frame(maxWidth: .infinity)
             }
             .navigationTitle("EV Charge Calculator")
             .navigationBarTitleDisplayMode(.inline)

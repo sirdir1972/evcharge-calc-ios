@@ -1,35 +1,26 @@
-# EVCharge Calc - iOS
+# EVCharge Calc (iOS)
 
-A mobile app for calculating EV charging energy requirements and timing.
-
-## Purpose
-
-This app is designed for **Electric Vehicle owners whose cars do not have built-in charge limiting features**. Many older EVs or basic models don't allow you to set a target charge level (like 80%) directly in the vehicle. 
-
-Instead, EV owners need to:
-1. Calculate how much energy is needed to reach their desired charge level
-2. Configure their EVSE (Electric Vehicle Supply Equipment/charging station) accordingly
-3. Monitor and stop charging manually when the target is reached
-
-## Features
-
-- **Precise SOC Input**: Set current and target State of Charge (SOC) using sliders or direct text input
-- **Energy Calculation**: Calculate exact kWh needed based on your battery specifications
-- **Battery Configuration**: Customize settings for:
-  - Battery capacity (kWh)
-  - State of Health (SOH) - accounts for battery degradation
-  - Charging losses - accounts for charging inefficiencies
-- **Quick Presets**: Common charging scenarios (Daily 20-80%, Road Trip 20-100%, Top-up 60-90%)
+A lightweight mobile app to calculate EV charging energy requirements, built for electric vehicle owners whose cars lack built-in charge-limiting features.
 
 ## Why This App?
 
-If your EV can automatically stop at 80% charge, you don't need this app. But if you have to manually configure your charging station or timer to stop at a specific energy amount, this app calculates exactly how much energy you need.
+Many EVs (and older or basic models) do not allow setting a target charge level directly in the vehicle (e.g. stopping at 80% to preserve battery health).
+
+If you need to configure your charging station or timer to stop at a specific amount, this app calculates the exact energy (kWh) required to reach your target State of Charge (SOC), taking battery degradation and charging losses into account.
+
+## Features
+
+- **SOC Input**: Set current and target SOC via sliders or direct numeric input.
+- **Accurate Calculation**: Factors in usable battery capacity (kWh), State of Health (SOH degradation), and charging efficiency losses.
+- **Quick Presets**: One-tap buttons for common target levels (Daily 80%, Top Up 90%, Road Trip 100%).
+- **go-e Charger Integration**: Optionally push the calculated energy limit (Wh) directly to your local go-e Charger wallbox via HTTP API.
+- **Persistent Settings**: Saves battery parameters and charger configuration locally.
 
 ## Platforms
 
-- iOS: SwiftUI native app
-- Android: Jetpack Compose native app
+- **iOS**: Native SwiftUI ([evcharge-calc-ios](https://github.com/sirdir1972/evcharge-calc-ios))
+- **Android**: Native Jetpack Compose & Material 3 ([evcharge-calc-android](https://github.com/sirdir1972/evcharge-calc-android))
 
 ## License
 
-[Choose your license - MIT recommended]
+MIT

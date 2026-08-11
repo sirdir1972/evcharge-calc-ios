@@ -7,7 +7,7 @@ struct SettingsView: View {
     @State private var isTestingConnection = false
     
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
                 Section(header: Text("Battery Configuration")) {
                     VStack(alignment: .leading, spacing: 8) {

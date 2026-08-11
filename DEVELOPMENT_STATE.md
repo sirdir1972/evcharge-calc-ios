@@ -28,15 +28,17 @@ iOS version of the EV Charge Calculator app that matches the Android version's f
 - ✅ Visual feedback for connection status and push results
 
 ### Quick Charge Presets
-- ✅ **UPDATED:** Four preset buttons with user-requested labels:
-  - **70% Daily** - Regular daily charging
-  - **80% Daily** - Standard battery-friendly level
-  - **90% Top Up** - Extended range when needed
-  - **100% Full Charge** - Maximum range for trips
+- ✅ **MATCHED TO ANDROID:** Three preset buttons identical to Android app:
+  - **Daily 80%** (80%) - Standard battery-friendly daily level
+  - **Road Trip 100%** (100%) - Maximum range for long trips
+  - **Top Up 90%** (90%) - Extended range top-up
+- ✅ Removed 70% preset to stay consistent with Android version
 
-### iOS-Specific Design
-- ✅ Navigation bar with gear icon for settings (no redundant buttons)
-- ✅ SwiftUI implementation with proper iOS design patterns
+### iOS & iPadOS Design
+- ✅ Modern `NavigationStack` implementation (fixes iPad fullscreen sidebar/left-sticking issue)
+- ✅ Centered responsive layout on iPad with maximum readable width container
+- ✅ Navigation bar with gear icon for settings
+- ✅ SwiftUI implementation with native iOS design patterns
 - ✅ Color-coded SOC indicators (red < 20%, orange < 50%, green ≥ 50%)
 - ✅ Proper keyboard handling for numeric inputs
 
@@ -61,18 +63,13 @@ EVChargeCalculator/
 
 ## 🔧 Recent Fixes & Improvements
 
-### Go-eCharger API Fix (Latest)
-- **Issue**: API was failing with "Failed to set energy limit: 1"
-- **Root Cause**: Strict string comparison expected exactly "true"
-- **Solution**: Enhanced parsing to handle:
-  - `"dwo": "true"` (string)
-  - `"dwo": 1` (number)
-  - `"dwo": actual_energy_value` (within ±100 Wh tolerance)
+### iPad Fullscreen & Layout Fix (Latest)
+- **Issue**: On iPad fullscreen, app stuck to the left edge (sidebar behavior of legacy `NavigationView`)
+- **Solution**: Migrated to `NavigationStack` and added centered responsive frame constraints (`maxWidth: 600`)
 
 ### Preset Button Updates (Latest)
-- Changed from generic labels to user-requested specific labels
-- Added 70% option for conservative daily charging
-- Updated 90% from "Long Trip" to "Top Up" for clarity
+- Removed 70% preset
+- Aligned presets with Android version (Daily 80%, Road Trip 100%, Top Up 90%)
 
 ## 🎨 UI/UX Highlights
 
@@ -82,7 +79,7 @@ EVChargeCalculator/
 3. **Results Card**: Energy needed, SOC difference, effective capacity
 4. **Go-eCharger Control**: Energy limit setting (when enabled/connected)
 5. **Battery Config Card**: Read-only display of key settings
-6. **Quick Presets**: 2x2 grid of preset buttons
+6. **Quick Presets**: 3-button row for quick charging presets
 
 ### Settings Screen
 - Battery capacity, SOH, charge losses sliders

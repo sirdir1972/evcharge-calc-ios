@@ -116,6 +116,67 @@ class GoEChargerAPI: ObservableObject {
         }
     }
     
+    func setCurrentLimit(ipAddress: String, ampere: Int) async -> GoEChargerResult<String> {
+        guard !ipAddress.isEmpty else {
+            return GoEChargerResult(success: false, data: nil, error: "IP address is empty")
+        }
+        
+        guard ampere >= 6 && ampere <= 32 else {
+            return GoEChargerResult(success: false, data: nil, error: "Current must be between 6 and 32 ampere")
+        }
+        
+        guard let url = URL(string: "http://\(ipAddress)/api/set?amp=\(ampere)") else {
+            return GoEChargerResult(success: false, data: nil, error: "Invalid IP address format")
+        }
+        
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        request.timeoutInterval = timeoutInterval
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            
+            guard let httpResponse = response as? HTTPURLResponse else {
+                return GoEChargerResult(success: false, data: nil, error: "Invalid response")
+            }
+            
+            guard httpResponse.statusCode == 200 else {
+                return GoEChargerResult(success: false, data: nil, error: "HTTP error: \(httpResponse.statusCode)")
+            }
+            
+            do {
+                if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] {
+                    let ampResult = json["amp"]
+                    var isSuccess = false
+                    
+                    if let stringResult = ampResult as? String {
+                        isSuccess = (stringResult == "true" || Int(stringResult) == ampere)
+                    } else if let numResult = ampResult as? NSNumber {
+                        isSuccess = (numResult.intValue == 1 || numResult.intValue == ampere)
+                    }
+                    
+                    if isSuccess {
+                        return GoEChargerResult(success: true, data: "Current limit set to \(ampere)A", error: nil)
+                    } else {
+                        return GoEChargerResult(success: false, data: nil, error: "Failed to set current: \(ampResult ?? "unknown")")
+                    }
+                } else {
+                    return GoEChargerResult(success: false, data: nil, error: "Invalid JSON response")
+                }
+            } catch {
+                return GoEChargerResult(success: false, data: nil, error: "JSON parsing error: \(error.localizedDescription)")
+            }
+        } catch {
+            if (error as NSError).code == NSURLErrorTimedOut {
+                return GoEChargerResult(success: false, data: nil, error: "Connection timeout")
+            } else if (error as NSError).code == NSURLErrorCannotConnectToHost {
+                return GoEChargerResult(success: false, data: nil, error: "Connection refused")
+            } else {
+                return GoEChargerResult(success: false, data: nil, error: "Network error: \(error.localizedDescription)")
+            }
+        }
+    }
+    
     func setEnergyLimit(ipAddress: String, energyWh: Double) async -> GoEChargerResult<String> {
         guard !ipAddress.isEmpty else {
             return GoEChargerResult(success: false, data: nil, error: "IP address is empty")
