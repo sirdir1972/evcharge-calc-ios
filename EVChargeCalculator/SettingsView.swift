@@ -93,7 +93,7 @@ struct SettingsView: View {
                             }
                             Spacer()
                             Toggle("", isOn: $settingsManager.goEChargerEnabled)
-                                .onChange(of: settingsManager.goEChargerEnabled) { enabled in
+                                .onChange(of: settingsManager.goEChargerEnabled) { _, enabled in
                                     if !enabled {
                                         settingsManager.goEChargerConnectionStatus = settingsManager.tr("not_tested")
                                     }

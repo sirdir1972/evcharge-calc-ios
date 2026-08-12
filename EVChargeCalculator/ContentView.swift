@@ -69,7 +69,7 @@ struct ContentView: View {
                                             .font(.title3.weight(.bold))
                                             .foregroundColor(.orange)
                                             .frame(width: 44)
-                                            .onChange(of: currentSOCText) { newValue in
+                                            .onChange(of: currentSOCText) { _, newValue in
                                                 let validation = settingsManager.validateSOCInput(newValue)
                                                 currentSOCError = validation.error
                                                 if let value = validation.value {
@@ -115,7 +115,7 @@ struct ContentView: View {
                                             .font(.title3.weight(.bold))
                                             .foregroundColor(.green)
                                             .frame(width: 44)
-                                            .onChange(of: targetSOCText) { newValue in
+                                            .onChange(of: targetSOCText) { _, newValue in
                                                 let validation = settingsManager.validateSOCInput(newValue)
                                                 targetSOCError = validation.error
                                                 if let value = validation.value {
