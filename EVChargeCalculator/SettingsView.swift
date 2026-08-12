@@ -9,10 +9,10 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Battery Configuration")) {
+                Section(header: Text(settingsManager.tr("battery_configuration"))) {
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Battery Capacity")
+                            Text(settingsManager.tr("battery_capacity"))
                             Spacer()
                             TextField("", value: $settingsManager.batteryCapacity, format: .number.precision(.fractionLength(1)))
                                 .textFieldStyle(.roundedBorder)
@@ -24,13 +24,13 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                         Slider(value: $settingsManager.batteryCapacity, in: 10...200, step: 0.5)
-                        .accentColor(.blue)
+                            .accentColor(.blue)
                     }
                     .padding(.vertical, 4)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("State of Health (SOH)")
+                            Text(settingsManager.tr("state_of_health"))
                             Spacer()
                             TextField("", value: $settingsManager.stateOfHealth, format: .number.precision(.fractionLength(1)))
                                 .textFieldStyle(.roundedBorder)
@@ -42,13 +42,13 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                         Slider(value: $settingsManager.stateOfHealth, in: 50...100, step: 0.5)
-                        .accentColor(.green)
+                            .accentColor(.green)
                     }
                     .padding(.vertical, 4)
                     
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Charge Losses")
+                            Text(settingsManager.tr("charge_losses"))
                             Spacer()
                             TextField("", value: $settingsManager.chargeLosses, format: .number.precision(.fractionLength(1)))
                                 .textFieldStyle(.roundedBorder)
@@ -60,34 +60,34 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                         Slider(value: $settingsManager.chargeLosses, in: 5...25, step: 0.5)
-                        .accentColor(.orange)
+                            .accentColor(.orange)
                     }
                     .padding(.vertical, 4)
                 }
                 
-                Section(header: Text("Calculated Values")) {
+                Section(header: Text(settingsManager.tr("calculated_values"))) {
                     HStack {
-                        Text("Effective Capacity")
+                        Text(settingsManager.tr("effective_capacity"))
                         Spacer()
-                        Text("\(settingsManager.effectiveBatteryCapacity, specifier: "%.1f") kWh")
+                        Text(String(format: "%.1f kWh", settingsManager.effectiveBatteryCapacity))
                             .foregroundColor(.secondary)
                     }
                     
                     HStack {
-                        Text("Usable Capacity (10-90%)")
+                        Text(settingsManager.tr("usable_capacity"))
                         Spacer()
-                        Text("\(settingsManager.effectiveBatteryCapacity * 0.8, specifier: "%.1f") kWh")
+                        Text(String(format: "%.1f kWh", settingsManager.effectiveBatteryCapacity * 0.8))
                             .foregroundColor(.secondary)
                     }
                 }
                 
-                Section(header: Text("go-eCharger Integration")) {
+                Section(header: Text(settingsManager.tr("goe_integration"))) {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Enable go-eCharger")
+                                Text(settingsManager.tr("enable_goe"))
                                     .font(.body)
-                                Text("Push charge limits to charger")
+                                Text(settingsManager.tr("enable_goe_desc"))
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -95,70 +95,83 @@ struct SettingsView: View {
                             Toggle("", isOn: $settingsManager.goEChargerEnabled)
                                 .onChange(of: settingsManager.goEChargerEnabled) { enabled in
                                     if !enabled {
-                                        settingsManager.goEChargerConnectionStatus = "Not tested"
+                                        settingsManager.goEChargerConnectionStatus = settingsManager.tr("not_tested")
                                     }
                                 }
                         }
                         
                         if settingsManager.goEChargerEnabled {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Charger IP Address")
-                                    .font(.body)
+                                Text(settingsManager.tr("charger_ip_address"))
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
                                 
                                 HStack {
                                     TextField("192.168.1.100", text: $settingsManager.goEChargerIpAddress)
-                                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                                        .textFieldStyle(.roundedBorder)
                                         .keyboardType(.numbersAndPunctuation)
-                                        .onChange(of: settingsManager.goEChargerIpAddress) { newValue in
-                                            // Only reset status if IP actually changed
-                                            if newValue != settingsManager.goEChargerIpAddress {
-                                                settingsManager.goEChargerConnectionStatus = "Not tested"
-                                            }
-                                        }
+                                        .autocapitalization(.none)
+                                        .disableAutocorrection(true)
                                     
-                                    Button("Test") {
+                                    Button(action: {
                                         testConnection()
+                                    }) {
+                                        if isTestingConnection {
+                                            ProgressView()
+                                                .scaleEffect(0.8)
+                                        } else {
+                                            Text(settingsManager.tr("test"))
+                                        }
                                     }
-                                    .buttonStyle(.borderedProminent)
+                                    .buttonStyle(.bordered)
                                     .disabled(settingsManager.goEChargerIpAddress.isEmpty || isTestingConnection)
                                 }
                                 
                                 HStack {
-                                    Text("Connection Status:")
-                                        .font(.body)
-                                    Spacer()
-                                    Text(isTestingConnection ? "Testing..." : settingsManager.goEChargerConnectionStatus)
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(connectionStatusColor)
+                                    Text(settingsManager.tr("connection_status"))
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text(settingsManager.goEChargerConnectionStatus)
+                                        .font(.caption)
+                                        .foregroundColor(statusColor)
                                 }
                             }
                         }
                     }
                 }
                 
-                Section(footer: Text("Adjust these values based on your EV's specifications. Battery capacity is the total kWh rating, SOH represents battery degradation over time, and charge losses account for charging inefficiencies.")) {
-                    EmptyView()
+                Section(header: Text(settingsManager.tr("language"))) {
+                    Picker(settingsManager.tr("language"), selection: $settingsManager.appLanguage) {
+                        ForEach(LanguageOption.allCases) { option in
+                            Text(option.displayName).tag(option.rawValue)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+                
+                Section {
+                    Text(settingsManager.tr("settings_description"))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
                 }
             }
-            .navigationTitle("EV Settings")
-            .navigationBarTitleDisplayMode(.large)
+            .navigationTitle(settingsManager.tr("ev_settings"))
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
+                    Button(settingsManager.tr("done")) {
                         dismiss()
                     }
+                    .fontWeight(.semibold)
                 }
             }
         }
     }
     
-    private var connectionStatusColor: Color {
-        if isTestingConnection {
-            return .blue
-        } else if settingsManager.goEChargerConnectionStatus.hasPrefix("✓") {
+    private var statusColor: Color {
+        if settingsManager.goEChargerConnectionStatus.contains("Connected") || settingsManager.goEChargerConnectionStatus.contains("Verbunden") || settingsManager.goEChargerConnectionStatus.contains("Connecté") || settingsManager.goEChargerConnectionStatus.contains("Verbonden") || settingsManager.goEChargerConnectionStatus.contains("Conectado") || settingsManager.goEChargerConnectionStatus.contains("Connesso") || settingsManager.goEChargerConnectionStatus.contains("Tilkoblet") || settingsManager.goEChargerConnectionStatus.contains("Ansluten") || settingsManager.goEChargerConnectionStatus.contains("Ligado") {
             return .green
-        } else if settingsManager.goEChargerConnectionStatus.hasPrefix("✗") {
+        } else if settingsManager.goEChargerConnectionStatus.contains("Failed") || settingsManager.goEChargerConnectionStatus.contains("Fehlgeschlagen") || settingsManager.goEChargerConnectionStatus.contains("Échec") || settingsManager.goEChargerConnectionStatus.contains("Mislukt") || settingsManager.goEChargerConnectionStatus.contains("Error") || settingsManager.goEChargerConnectionStatus.contains("Non riuscito") || settingsManager.goEChargerConnectionStatus.contains("Mislyktes") || settingsManager.goEChargerConnectionStatus.contains("Misslyckades") || settingsManager.goEChargerConnectionStatus.contains("Falha") {
             return .red
         } else {
             return .secondary
@@ -166,19 +179,19 @@ struct SettingsView: View {
     }
     
     private func testConnection() {
+        guard !settingsManager.goEChargerIpAddress.isEmpty else { return }
+        
         isTestingConnection = true
-        settingsManager.goEChargerConnectionStatus = "Testing..."
+        settingsManager.goEChargerConnectionStatus = settingsManager.tr("testing")
         
         Task {
             let result = await goEChargerAPI.testConnection(ipAddress: settingsManager.goEChargerIpAddress)
-            
             await MainActor.run {
                 isTestingConnection = false
-                
                 if result.success {
-                    settingsManager.goEChargerConnectionStatus = "✓ \(result.data ?? "Connected")"
+                    settingsManager.goEChargerConnectionStatus = "✓ " + settingsManager.tr("connected")
                 } else {
-                    settingsManager.goEChargerConnectionStatus = "✗ \(result.error ?? "Failed")"
+                    settingsManager.goEChargerConnectionStatus = "✗ " + settingsManager.tr("failed")
                 }
             }
         }

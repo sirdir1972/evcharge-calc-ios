@@ -1,48 +1,34 @@
 # iOS EV Charge Calculator - Development State
 
-## Current Status: ✅ COMPLETE - Ready for Production
+## Current Status: ✅ COMPLETE - Ready for Production (v1.1)
 
-**Last Updated:** August 15, 2025  
-**Commit:** d21c4d4 - "Update preset buttons and fix Go-eCharger API"
+**Last Updated:** August 2026  
+**Version:** 1.1
 
 ## 🎯 Project Overview
 
-iOS version of the EV Charge Calculator app that matches the Android version's functionality with native iOS design patterns.
+iOS version of the EV Charge Calculator app that matches the Android version's functionality and design with native iOS design patterns.
 
 ## ✅ Completed Features
 
-### Core Functionality
+### Multi-Language Support (9 Languages)
+- ✅ 9 supported languages: English, Deutsch, Français, Nederlands, Español, Italiano, Norsk bokmål, Svenska, Português
+- ✅ In-app Language Selector in Settings (with System Default option and instant live UI refresh)
+- ✅ Dedicated `Localization.swift` architecture
+
+### Compact Single-Screen Design (No Scrolling)
+- ✅ Compact header with live effective capacity and SOH summary (`73.9 kWh (96% SOH)`)
+- ✅ Presets (`Daily 80%`, `Top Up 90%`, `Road Trip 100%`) positioned directly below the Target Charge slider with active color highlights
+- ✅ Redesigned Hero Results Card with prominent kWh display, `+XX%` badge, and embedded go-eCharger control
+- ✅ Removed redundant battery config card from the main screen so the entire layout fits on one screen without scrolling
+
+### Core Functionality & Wallbox Integration
 - ✅ Battery capacity calculation with SOH and charge losses
 - ✅ Current SOC and Target SOC input via sliders and text fields
 - ✅ Real-time energy requirement calculation
 - ✅ Settings persistence using UserDefaults
-- ✅ Clean, card-based UI design with proper spacing and shadows
+- ✅ go-eCharger HTTP API integration (connection testing, energy limit setting)
 
-### Go-eCharger Integration
-- ✅ Connection testing with IP address validation
-- ✅ Energy limit setting via HTTP API
-- ✅ **FIXED:** API response parsing handles multiple formats:
-  - String "true"
-  - Number 1
-  - Actual energy value (within 100 Wh tolerance)
-- ✅ Visual feedback for connection status and push results
-
-### Quick Charge Presets
-- ✅ **MATCHED TO ANDROID:** Three preset buttons identical to Android app:
-  - **Daily 80%** (80%) - Standard battery-friendly daily level
-  - **Road Trip 100%** (100%) - Maximum range for long trips
-  - **Top Up 90%** (90%) - Extended range top-up
-- ✅ Removed 70% preset to stay consistent with Android version
-
-### iOS & iPadOS Design
-- ✅ Modern `NavigationStack` implementation (fixes iPad fullscreen sidebar/left-sticking issue)
-- ✅ Centered responsive layout on iPad with maximum readable width container
-- ✅ Navigation bar with gear icon for settings
-- ✅ SwiftUI implementation with native iOS design patterns
-- ✅ Color-coded SOC indicators (red < 20%, orange < 50%, green ≥ 50%)
-- ✅ Proper keyboard handling for numeric inputs
-
-## 🏗️ Technical Architecture
 
 ### Project Structure
 ```

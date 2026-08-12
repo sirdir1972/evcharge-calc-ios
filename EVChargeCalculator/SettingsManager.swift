@@ -52,6 +52,13 @@ class SettingsManager: ObservableObject {
         }
     }
     
+    // App language selection
+    @Published var appLanguage: String {
+        didSet {
+            UserDefaults.standard.set(appLanguage, forKey: "appLanguage")
+        }
+    }
+    
     init() {
         // Load saved values or use defaults
         self.batteryCapacity = UserDefaults.standard.object(forKey: "batteryCapacity") as? Double ?? 75.0
@@ -62,6 +69,11 @@ class SettingsManager: ObservableObject {
         self.goEChargerEnabled = UserDefaults.standard.object(forKey: "goEChargerEnabled") as? Bool ?? false
         self.goEChargerIpAddress = UserDefaults.standard.object(forKey: "goEChargerIpAddress") as? String ?? ""
         self.goEChargerConnectionStatus = UserDefaults.standard.object(forKey: "goEChargerConnectionStatus") as? String ?? "Not tested"
+        self.appLanguage = UserDefaults.standard.string(forKey: "appLanguage") ?? ""
+    }
+    
+    func tr(_ key: String) -> String {
+        return L10n.tr(key, lang: appLanguage)
     }
     
     // Calculate effective battery capacity considering SOH
@@ -111,9 +123,9 @@ class SettingsManager: ObservableObject {
     /// Get validation message for current SOC state
     func getSOCValidationMessage() -> String? {
         if currentSOC > targetSOC {
-            return "Current charge cannot exceed target charge"
+            return tr("error_current_exceeds_target")
         } else if targetSOC - currentSOC < 1.0 {
-            return "Target charge should be higher than current charge"
+            return tr("error_target_higher_than_current")
         }
         return nil
     }
@@ -121,19 +133,19 @@ class SettingsManager: ObservableObject {
     /// Validate input string and return parsed value or nil
     func validateSOCInput(_ input: String) -> (value: Double?, error: String?) {
         guard !input.isEmpty else {
-            return (nil, "Required")
+            return (nil, tr("error_required"))
         }
         
         guard let value = Double(input) else {
-            return (nil, "Invalid number")
+            return (nil, tr("error_invalid_number"))
         }
         
         if value < 0 {
-            return (nil, "Cannot be negative")
+            return (nil, tr("error_cannot_be_negative"))
         }
         
         if value > 100 {
-            return (nil, "Cannot exceed 100%")
+            return (nil, tr("error_cannot_exceed_100"))
         }
         
         return (value, nil)

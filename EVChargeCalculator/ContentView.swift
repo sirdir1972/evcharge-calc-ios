@@ -5,11 +5,10 @@ struct ContentView: View {
     @State private var currentSOCText: String = ""
     @State private var targetSOCText: String = ""
     @State private var showingSettings = false
-    @State private var isEditingCurrentSOC = false
-    @State private var isEditingTargetSOC = false
     @StateObject private var goEChargerAPI = GoEChargerAPI()
     @State private var isPushingLimit = false
     @State private var pushResult: String? = nil
+    @State private var pushResultIsSuccess = false
     
     // Validation states
     @State private var currentSOCError: String? = nil
@@ -25,466 +24,329 @@ struct ContentView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Header
-                    VStack(spacing: 8) {
-                        Image(systemName: "ev.charger.fill")
-                            .font(.system(size: 48))
-                            .foregroundColor(.blue)
+            VStack(spacing: 0) {
+                // Main Content
+                ScrollView {
+                    VStack(spacing: 12) {
+                        // Header info
+                        HStack(alignment: .bottom) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(settingsManager.tr("app_name"))
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                Text(String(format: "%.1f kWh (%.0f%% SOH)", settingsManager.effectiveBatteryCapacity, settingsManager.stateOfHealth))
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                            Button(action: {
+                                showingSettings = true
+                            }) {
+                                Image(systemName: "gearshape.fill")
+                                    .font(.title3)
+                                    .foregroundColor(.secondary)
+                                    .padding(8)
+                                    .background(Color(.secondarySystemBackground))
+                                    .clipShape(Circle())
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
                         
-                        Text("EV Charge Calculator")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                    }
-                    .padding(.top, 20)
-                    
-                    // Main calculation card
-                    VStack(spacing: 20) {
+                        // Input Card
                         VStack(spacing: 16) {
-                            // Current SOC Section
-                            VStack(alignment: .leading, spacing: 12) {
+                            // Current SOC
+                            VStack(alignment: .leading, spacing: 6) {
                                 HStack {
-                                    Image(systemName: "battery.25")
-                                        .foregroundColor(.orange)
-                                        .font(.title2)
-                                    Text("Current Charge")
-                                        .font(.headline)
-                                        .fontWeight(.medium)
+                                    Text(settingsManager.tr("current_charge"))
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
                                     Spacer()
-                                    VStack(alignment: .trailing, spacing: 4) {
+                                    HStack(spacing: 2) {
                                         TextField("", text: $currentSOCText)
-                                            .textFieldStyle(.roundedBorder)
                                             .keyboardType(.numberPad)
-                                            .frame(width: 80)
                                             .multilineTextAlignment(.trailing)
-                                            .font(.title2.weight(.semibold))
-                                            .foregroundColor(currentSOCError != nil ? .red : (settingsManager.currentSOC < 20 ? .red : (settingsManager.currentSOC < 50 ? .orange : .green)))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(currentSOCError != nil ? Color.red : Color.clear, lineWidth: 1)
-                                            )
+                                            .font(.title3.weight(.bold))
+                                            .foregroundColor(.orange)
+                                            .frame(width: 44)
                                             .onChange(of: currentSOCText) { newValue in
                                                 let validation = settingsManager.validateSOCInput(newValue)
                                                 currentSOCError = validation.error
-                                                
                                                 if let value = validation.value {
                                                     settingsManager.setCurrentSOC(value)
+                                                    targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
                                                 }
                                             }
-                                        
-                                        if let error = currentSOCError {
-                                            Text(error)
-                                                .font(.caption2)
-                                                .foregroundColor(.red)
-                                                .frame(maxWidth: 80, alignment: .trailing)
-                                        }
+                                        Text("%")
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundColor(.secondary)
                                     }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color(.secondarySystemBackground))
+                                    .cornerRadius(8)
                                 }
                                 
                                 Slider(value: Binding(
                                     get: { settingsManager.currentSOC },
                                     set: { newValue in
                                         settingsManager.setCurrentSOC(newValue)
-                                        currentSOCError = nil // Clear errors when using slider
+                                        currentSOCText = String(format: "%.0f", newValue)
+                                        targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
+                                        currentSOCError = nil
                                     }
-                                ), in: 0...100, step: 1) { editing in
-                                    if !editing {
-                                        currentSOCText = String(format: "%.0f", settingsManager.currentSOC)
-                                    }
-                                }
-                                .accentColor(currentSOCError != nil ? .red : .orange)
+                                ), in: 0...100, step: 1)
+                                .accentColor(.orange)
                             }
                             
                             Divider()
-                                .padding(.horizontal, -16)
                             
-                            // Target SOC Section
-                            VStack(alignment: .leading, spacing: 12) {
+                            // Target SOC
+                            VStack(alignment: .leading, spacing: 6) {
                                 HStack {
-                                    Image(systemName: "battery.100")
-                                        .foregroundColor(.green)
-                                        .font(.title2)
-                                    Text("Target Charge")
-                                        .font(.headline)
-                                        .fontWeight(.medium)
+                                    Text(settingsManager.tr("target_charge"))
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
                                     Spacer()
-                                    VStack(alignment: .trailing, spacing: 4) {
+                                    HStack(spacing: 2) {
                                         TextField("", text: $targetSOCText)
-                                            .textFieldStyle(.roundedBorder)
                                             .keyboardType(.numberPad)
-                                            .frame(width: 80)
                                             .multilineTextAlignment(.trailing)
-                                            .font(.title2.weight(.semibold))
-                                            .foregroundColor(targetSOCError != nil ? .red : (settingsManager.targetSOC < 20 ? .red : (settingsManager.targetSOC < 50 ? .orange : .green)))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 8)
-                                                    .stroke(targetSOCError != nil ? Color.red : Color.clear, lineWidth: 1)
-                                            )
+                                            .font(.title3.weight(.bold))
+                                            .foregroundColor(.green)
+                                            .frame(width: 44)
                                             .onChange(of: targetSOCText) { newValue in
                                                 let validation = settingsManager.validateSOCInput(newValue)
                                                 targetSOCError = validation.error
-                                                
                                                 if let value = validation.value {
                                                     settingsManager.setTargetSOC(value)
+                                                    currentSOCText = String(format: "%.0f", settingsManager.currentSOC)
                                                 }
                                             }
-                                        
-                                        if let error = targetSOCError {
-                                            Text(error)
-                                                .font(.caption2)
-                                                .foregroundColor(.red)
-                                                .frame(maxWidth: 80, alignment: .trailing)
-                                        }
+                                        Text("%")
+                                            .font(.subheadline.weight(.semibold))
+                                            .foregroundColor(.secondary)
                                     }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(Color(.secondarySystemBackground))
+                                    .cornerRadius(8)
                                 }
                                 
                                 Slider(value: Binding(
                                     get: { settingsManager.targetSOC },
                                     set: { newValue in
                                         settingsManager.setTargetSOC(newValue)
-                                        targetSOCError = nil // Clear errors when using slider
+                                        targetSOCText = String(format: "%.0f", newValue)
+                                        currentSOCText = String(format: "%.0f", settingsManager.currentSOC)
+                                        targetSOCError = nil
                                     }
-                                ), in: 0...100, step: 1) { editing in
-                                    if !editing {
-                                        targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
+                                ), in: 0...100, step: 1)
+                                .accentColor(.green)
+                                
+                                // Quick Presets row directly below Target Charge
+                                HStack(spacing: 8) {
+                                    PresetChip(
+                                        title: settingsManager.tr("preset_daily_80"),
+                                        isSelected: abs(settingsManager.targetSOC - 80.0) < 0.5
+                                    ) {
+                                        applyPreset(80.0)
+                                    }
+                                    
+                                    PresetChip(
+                                        title: settingsManager.tr("preset_top_up_90"),
+                                        isSelected: abs(settingsManager.targetSOC - 90.0) < 0.5
+                                    ) {
+                                        applyPreset(90.0)
+                                    }
+                                    
+                                    PresetChip(
+                                        title: settingsManager.tr("preset_road_trip_100"),
+                                        isSelected: abs(settingsManager.targetSOC - 100.0) < 0.5
+                                    ) {
+                                        applyPreset(100.0)
                                     }
                                 }
-                                .accentColor(targetSOCError != nil ? .red : .green)
+                                .padding(.top, 4)
                             }
                         }
-                    }
-                    .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemBackground))
-                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-                    )
-                    
-                    // Validation warning banner
-                    if let validationMessage = settingsManager.getSOCValidationMessage() {
-                        HStack(spacing: 8) {
-                            Text("⚠️")
-                                .font(.title3)
-                            Text("Auto-adjusted: \(validationMessage)")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundColor(.orange)
-                            Spacer()
-                        }
-                        .padding(12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.orange.opacity(0.1))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.orange.opacity(0.3), lineWidth: 1)
-                        )
-                    }
-                    
-                    // Results Card
-                    VStack(spacing: 16) {
-                        HStack {
-                            Image(systemName: "bolt.circle.fill")
-                                .foregroundColor(.blue)
-                                .font(.title2)
-                            Text("Charge Required")
-                                .font(.headline)
-                                .fontWeight(.medium)
-                            Spacer()
+                        .padding(14)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+                        .padding(.horizontal, 16)
+                        
+                        // Validation warning if any
+                        if let validationMessage = settingsManager.getSOCValidationMessage(), !settingsManager.isSOCConfigurationValid() {
+                            HStack {
+                                Text("⚠️")
+                                    .font(.caption)
+                                Text(String(format: settingsManager.tr("auto_adjusted_format"), validationMessage))
+                                    .font(.caption)
+                                    .foregroundColor(Color(red: 0.6, green: 0.4, blue: 0.0))
+                            }
+                            .padding(8)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(red: 1.0, green: 0.95, blue: 0.8))
+                            .cornerRadius(8)
+                            .padding(.horizontal, 16)
                         }
                         
-                        VStack(spacing: 12) {
-                            HStack {
-                                Text("Energy Needed:")
-                                Spacer()
-                                Text("\(requiredEnergy, specifier: "%.2f") kWh")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(.blue)
-                            }
+                        // Results Hero Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(settingsManager.tr("charge_required"))
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.secondary)
                             
-                            HStack {
-                                Text("SOC Increase:")
-                                Spacer()
-                                Text("\(socDifference, specifier: "%.0f")%")
-                                    .font(.body)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(socDifference >= 0 ? .green : .red)
-                            }
-                            
-                            HStack {
-                                Text("Effective Capacity:")
-                                Spacer()
-                                Text("\(settingsManager.effectiveBatteryCapacity, specifier: "%.1f") kWh")
-                                    .font(.body)
-                                    .fontWeight(.medium)
+                            HStack(alignment: .center) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(String(format: "%.2f kWh", requiredEnergy))
+                                        .font(.system(size: 28, weight: .bold, design: .rounded))
+                                        .foregroundColor(.blue)
+                                    
+                                    Text(String(
+                                        format: "%d%% ➔ %d%% (%@)",
+                                        Int(settingsManager.currentSOC.rounded()),
+                                        Int(settingsManager.targetSOC.rounded()),
+                                        String(format: settingsManager.tr("incl_losses_format"), Int(settingsManager.chargeLosses.rounded()))
+                                    ))
+                                    .font(.caption)
                                     .foregroundColor(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Text(String(format: "+%.0f%%", socDifference))
+                                    .font(.subheadline.weight(.bold))
+                                    .foregroundColor(Color(red: 0.15, green: 0.55, blue: 0.25))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(Color(red: 0.9, green: 0.96, blue: 0.9))
+                                    .cornerRadius(8)
                             }
-                        }
-                        
-                        if socDifference < 0 {
-                            Text("Target charge is lower than current charge. Please adjust values.")
-                                .font(.caption)
-                                .foregroundColor(.red)
-                                .padding(.top, 8)
-                        } else if socDifference == 0 {
-                            Text("Target charge equals current charge - no charging needed.")
-                                .font(.caption)
-                                .foregroundColor(.orange)
-                                .fontWeight(.medium)
-                                .padding(.top, 8)
-                        }
-                        
-                        // go-eCharger Control Section (only if enabled and connected)
-                        if settingsManager.goEChargerEnabled &&
-                           settingsManager.goEChargerConnectionStatus.hasPrefix("✓") &&
-                           settingsManager.targetSOC > settingsManager.currentSOC {
                             
-                            Divider()
-                                .padding(.horizontal, -16)
-                            
-                            VStack(spacing: 12) {
-                                HStack {
-                                    Image(systemName: "ev.charger.fill")
-                                        .foregroundColor(.blue)
-                                        .font(.title2)
-                                    Text("go-eCharger Control")
-                                        .font(.headline)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(.blue)
-                                    Spacer()
-                                    }
-                                
-                                let energyNeeded = settingsManager.calculateRequiredEnergy(
-                                    from: settingsManager.currentSOC,
-                                    to: settingsManager.targetSOC
-                                )
-                                let energyNeededRounded = ceil(energyNeeded * 10.0) / 10.0
-                                let energyNeededWh = energyNeededRounded * 1000
+                            // go-eCharger Integration inside Hero Card
+                            if settingsManager.goEChargerEnabled {
+                                Divider()
+                                    .padding(.vertical, 2)
                                 
                                 HStack {
-                                    Text("Energy limit: \(energyNeededRounded, specifier: "%.1f") kWh")
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
-                                    
+                                    Text(String(format: settingsManager.tr("energy_limit_format"), requiredEnergy))
+                                        .font(.subheadline.weight(.medium))
                                     Spacer()
-                                    
-                                    Text("(\(Int(energyNeededWh)) Wh)")
+                                    Text(String(format: settingsManager.tr("energy_limit_wh_format"), Int((requiredEnergy * 1000).rounded())))
                                         .font(.caption)
                                         .foregroundColor(.secondary)
                                 }
                                 
-                                Button {
-                                    setEnergyLimit(energyWh: energyNeededWh)
-                                } label: {
-                                    HStack(spacing: 8) {
+                                Button(action: {
+                                    pushLimitToCharger()
+                                }) {
+                                    HStack {
                                         if isPushingLimit {
                                             ProgressView()
+                                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                                 .scaleEffect(0.8)
-                                            Text("Pushing...")
+                                            Text(settingsManager.tr("btn_pushing"))
+                                                .fontWeight(.semibold)
                                         } else {
                                             Image(systemName: "paperplane.fill")
-                                            Text("Set Energy Limit")
+                                            Text(settingsManager.tr("btn_set_energy_limit"))
+                                                .fontWeight(.semibold)
                                         }
                                     }
-                                    .font(.subheadline)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(.white)
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 10)
+                                    .padding(.vertical, 12)
                                     .background(Color.blue)
+                                    .foregroundColor(.white)
                                     .cornerRadius(10)
                                 }
-                                .disabled(isPushingLimit)
+                                .disabled(isPushingLimit || requiredEnergy <= 0)
                                 
-                                // Push result status
                                 if let result = pushResult {
                                     Text(result)
                                         .font(.caption)
-                                        .fontWeight(.medium)
-                                        .foregroundColor(result.hasPrefix("✓") ? .green : .red)
-                                        .frame(maxWidth: .infinity, alignment: .leading)
+                                        .foregroundColor(pushResultIsSuccess ? .green : .red)
+                                        .frame(maxWidth: .infinity, alignment: .center)
                                 }
                             }
                         }
+                        .padding(14)
+                        .background(Color(.systemBackground))
+                        .cornerRadius(12)
+                        .shadow(color: Color.black.opacity(0.04), radius: 6, x: 0, y: 2)
+                        .padding(.horizontal, 16)
                     }
-                    .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemBackground))
-                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-                    )
-                    
-                    // Settings Card
-                    VStack(spacing: 16) {
-                        HStack {
-                            Image(systemName: "gearshape.fill")
-                                .foregroundColor(.purple)
-                                .font(.title2)
-                            Text("Battery Configuration")
-                                .font(.headline)
-                                .fontWeight(.medium)
-                            Spacer()
-                        }
-                        
-                        VStack(spacing: 12) {
-                            HStack {
-                                Text("Battery Capacity:")
-                                Spacer()
-                                Text("\(settingsManager.batteryCapacity, specifier: "%.1f") kWh")
-                                    .font(.body)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.secondary)
-                            }
-                            
-                            HStack {
-                                Text("State of Health:")
-                                Spacer()
-                                Text("\(settingsManager.stateOfHealth, specifier: "%.1f")%")
-                                    .font(.body)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(settingsManager.stateOfHealth > 90 ? .green : (settingsManager.stateOfHealth > 80 ? .orange : .red))
-                            }
-                            
-                            HStack {
-                                Text("Charge Losses:")
-                                Spacer()
-                                Text("\(settingsManager.chargeLosses, specifier: "%.1f")%")
-                                    .font(.body)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.secondary)
-                            }
-                        }
-                    }
-                    .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color(.systemBackground))
-                            .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 2)
-                    )
-                    
-                    // Quick presets
-                    VStack(spacing: 12) {
-                        Text("Quick Presets")
-                            .font(.headline)
-                            .fontWeight(.medium)
-                        
-                        HStack(spacing: 12) {
-                            PresetButton(title: "Daily\n80%", targetSOC: 80, onTap: { target in
-                                settingsManager.setTargetSOC(target)
-                                targetSOCError = nil
-                                targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
-                            })
-                            
-                            PresetButton(title: "Top Up\n90%", targetSOC: 90, onTap: { target in
-                                settingsManager.setTargetSOC(target)
-                                targetSOCError = nil
-                                targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
-                            })
-                            
-                            PresetButton(title: "Road Trip\n100%", targetSOC: 100, onTap: { target in
-                                settingsManager.setTargetSOC(target)
-                                targetSOCError = nil
-                                targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
-                            })
-                        }
-                    }
-                    .padding(.horizontal)
+                    .frame(maxWidth: 600)
+                    .frame(maxWidth: .infinity)
                 }
-                .padding()
-                .frame(maxWidth: 600)
-                .frame(maxWidth: .infinity)
+                .background(Color(.systemGroupedBackground))
             }
-            .navigationTitle("EV Charge Calculator")
-            .navigationBarTitleDisplayMode(.inline)
-            .background(Color(.systemGroupedBackground))
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingSettings = true
-                    } label: {
-                        Image(systemName: "gearshape")
-                            .font(.title2)
-                    }
-                }
+            .navigationBarHidden(true)
+            .sheet(isPresented: $showingSettings) {
+                SettingsView(settingsManager: settingsManager)
             }
-        }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView(settingsManager: settingsManager)
-        }
-        .onAppear {
-            currentSOCText = String(format: "%.0f", settingsManager.currentSOC)
-            targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-            // Clear push result when app comes back to foreground
-            if pushResult != nil {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    pushResult = nil
-                }
+            .onAppear {
+                currentSOCText = String(format: "%.0f", settingsManager.currentSOC)
+                targetSOCText = String(format: "%.0f", settingsManager.targetSOC)
             }
         }
     }
     
-    private func setEnergyLimit(energyWh: Double) {
+    private func applyPreset(_ targetValue: Double) {
+        settingsManager.setTargetSOC(targetValue)
+        targetSOCText = String(format: "%.0f", targetValue)
+        currentSOCText = String(format: "%.0f", settingsManager.currentSOC)
+        targetSOCError = nil
+    }
+    
+    private func pushLimitToCharger() {
+        guard !settingsManager.goEChargerIpAddress.isEmpty else {
+            pushResult = "✗ " + settingsManager.tr("error_required")
+            pushResultIsSuccess = false
+            return
+        }
+        
         isPushingLimit = true
         pushResult = nil
         
+        let energyWh = requiredEnergy * 1000.0
         Task {
-            let result = await goEChargerAPI.setEnergyLimit(
-                ipAddress: settingsManager.goEChargerIpAddress,
-                energyWh: energyWh
-            )
-            
+            let result = await goEChargerAPI.setEnergyLimit(ipAddress: settingsManager.goEChargerIpAddress, energyWh: energyWh)
             await MainActor.run {
                 isPushingLimit = false
-                
+                pushResultIsSuccess = result.success
                 if result.success {
-                    pushResult = "✓ Energy limit set successfully"
+                    pushResult = settingsManager.tr("goe_limit_success")
                 } else {
-                    pushResult = "✗ \(result.error ?? "Failed")"
-                }
-                
-                // Clear result after 5 seconds
-                DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
-                    pushResult = nil
+                    pushResult = "✗ " + (result.error ?? settingsManager.tr("failed"))
                 }
             }
         }
     }
 }
 
-struct PresetButton: View {
+struct PresetChip: View {
     let title: String
-    let targetSOC: Double
-    let onTap: (Double) -> Void
+    let isSelected: Bool
+    let action: () -> Void
     
     var body: some View {
-        Button {
-            onTap(targetSOC)
-        } label: {
+        Button(action: action) {
             Text(title)
-                .font(.caption)
-                .fontWeight(.medium)
-                .multilineTextAlignment(.center)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 8)
+                .font(.footnote.weight(.medium))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
                 .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.blue.opacity(0.1))
-                )
+                .background(isSelected ? Color.blue.opacity(0.12) : Color(.secondarySystemBackground))
+                .foregroundColor(isSelected ? .blue : .primary)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.blue, lineWidth: 1)
+                        .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 1.5)
                 )
+                .cornerRadius(8)
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(.plain)
     }
-}
-
-#Preview {
-    ContentView()
 }
